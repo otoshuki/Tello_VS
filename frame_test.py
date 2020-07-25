@@ -1,4 +1,5 @@
 import cv2
+import cv2.aruco
 from easytello import Tello
 import time
 
