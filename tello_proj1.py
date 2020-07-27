@@ -19,12 +19,14 @@ import time
 from threading import Thread
 
 class Tello_controller:
+
     def __init__(self, speed = 50):
         '''
         Well, initialize
         '''
         #Class variables
         self.emergency_land_activated = False
+        self.take_off_activated = False
         self.battery_log_delay = 2
         self.speed = speed
         #Initialize the drone and stream
@@ -36,6 +38,7 @@ class Tello_controller:
         self.drone.send_command("streamon")
         time.sleep(1)
         self.cap = cv2.VideoCapture("udp://192.168.10.1:11111")
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)
         print("LOG: Stream service on")
         #Set up battery and emergency land threads
         self.battery_thread = Thread(target=self._battery_thread)
@@ -60,10 +63,11 @@ class Tello_controller:
             return 0
         #First frame takes time to load up
         #Take off
-        # self.drone.takeoff()
+        self.drone.takeoff()
         time.sleep(1)
+        self.take_off_activated = True
         print("LOG: Successful takeoff")
-        #NOTE: First few frames take time
+        #NOTE: First few frames take time to flush out
         #Run while emergency land is off
         while not self.emergency_land_activated:
             #Key press
@@ -74,9 +78,9 @@ class Tello_controller:
             corners, ids, rejected = aruco.detectMarkers(gray,
                                         self.aruco_dict,
                                         parameters = self.params)
-            detected = aruco.drawDetectedMarkers(frame, corners)
+            self.detected = aruco.drawDetectedMarkers(frame, corners)
             #Show detection
-            cv2.imshow("Tello Detected", detected)
+            cv2.imshow("Tello Detected", self.detected)
 
 
             #Emergency land
@@ -113,7 +117,7 @@ class Tello_controller:
         self.drone.set_speed(10)
         #Land
         print("EMERGENCY: Landing Drone!")
-        # self.drone.land()
+        self.drone.land()
         #Shutdown stream
         time.sleep(1)
         print("EMERGENCY: Shutting stream")
