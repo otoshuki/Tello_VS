@@ -49,8 +49,14 @@ def main():
             M_mat[:3, :3] = r_mat
             M_mat[:3, 3] = t_vec
             M_mat[3,3] = 1
+            #Get inverse transformation, of camera wrt marker
+            M_inv = np.linalg.inv(M_mat)
+            #Get camera location wrt marker
+            cam_coords = M_inv[:3, 3]
             #Debug print
-            print("Homogeneous transformation:\n", M_mat)
+            # print("Homogeneous transformation:\n", M_mat)
+            # print("Inverse transfromation:\n", M_inv)
+            # print("Camera coordinates:", cam_coords)
         #Show image
         cv2.imshow("detected", detected)
         k = cv2.waitKey(1)
