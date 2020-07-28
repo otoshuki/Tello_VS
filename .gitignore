@@ -1,2 +1,3 @@
 ./easytello
-./calib_images
+./debug_calib_images
+./tello_calib_images

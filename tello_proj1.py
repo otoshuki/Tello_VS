@@ -17,6 +17,7 @@ import numpy
 from easytello import Tello
 import time
 from threading import Thread
+import numpy as np
 
 class Tello_controller:
 
@@ -49,7 +50,10 @@ class Tello_controller:
         self.aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
         self.params = aruco.DetectorParameters_create()
         print("LOG: ArUco set up")
-        #TBD: Get intrinsic camera parameters
+        #Set up camera matrix and distortion coeffs
+        cv_file = cv2.FileStorage("tello_params.yaml", cv2.FILE_STORAGE_READ)
+        self.cam_mtx = cv_file.getNode("camera_matrix").mat()
+        self.dist_coeff = cv_file.getNode("dist_coeff").mat()[0]
 
     def run(self):
         '''
@@ -63,12 +67,13 @@ class Tello_controller:
             return 0
         #First frame takes time to load up
         #Take off
-        self.drone.takeoff()
+        # self.drone.takeoff()
         time.sleep(1)
         self.take_off_activated = True
         print("LOG: Successful takeoff")
         #NOTE: First few frames take time to flush out
         #Run while emergency land is off
+        img_id = 0
         while not self.emergency_land_activated:
             #Key press
             k = cv2.waitKey(1)
@@ -78,11 +83,38 @@ class Tello_controller:
             corners, ids, rejected = aruco.detectMarkers(gray,
                                         self.aruco_dict,
                                         parameters = self.params)
+            #Draw the marker
             self.detected = aruco.drawDetectedMarkers(frame, corners)
+            #Get the rotation and translation vectors
+            if np.all(ids != None):
+                rvec_list = []
+                tvec_list = []
+                #Get the estimated pose of the marker wrt camera, marker size = 9cm
+                rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, 9, self.cam_mtx, self.dist_coeff)
+                #Also draw axes
+                for i in range(len(ids)):
+                    aruco.drawAxis(self.detected, self.cam_mtx, self.dist_coeff, rvecs[i], tvecs[i], 4.5)
+                #Get the rotation matrix using Rodrigues formula
+                r_mat, _ = cv2.Rodrigues(rvecs[0][0])
+                #The only translation vector to use
+                t_vec = tvecs[0][0]
+                #Get transformation matrix
+                self.M_mat = np.zeros((4,4))
+                self.M_mat[:3, :3] = r_mat
+                self.M_mat[:3, 3] = t_vec
+                self.M_mat[3,3] = 1
+                #Get inverse transformation, of camera wrt marker
+                self.M_inv = np.linalg.inv(self.M_mat)
+                #Get camera location wrt marker
+                self.cam_coords = self.M_inv[:3, 3]
+                print("Camera coordinates:", self.cam_coords)
             #Show detection
             cv2.imshow("Tello Detected", self.detected)
-
-
+            #Take pictures with s
+            if k == ord("s"):
+                cv2.imwrite("tello_img{0}.jpg".format(img_id), frame)
+                print("LOG: Saved image as tello_img{0}.jpg".format(img_id))
+                img_id += 1
             #Emergency land
             if k == 27:
                 self.emergency_land()
@@ -117,7 +149,7 @@ class Tello_controller:
         self.drone.set_speed(10)
         #Land
         print("EMERGENCY: Landing Drone!")
-        self.drone.land()
+        # self.drone.land()
         #Shutdown stream
         time.sleep(1)
         print("EMERGENCY: Shutting stream")

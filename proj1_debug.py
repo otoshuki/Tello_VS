@@ -17,7 +17,7 @@ def main():
     aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
     params = aruco.DetectorParameters_create()
     #Set up camera matrix and distortion coeffs
-    cv_file = cv2.FileStorage("debug_calib.yaml", cv2.FILE_STORAGE_READ)
+    cv_file = cv2.FileStorage("debug_params.yaml", cv2.FILE_STORAGE_READ)
     cam_mtx = cv_file.getNode("camera_matrix").mat()
     print("Camera Matrix: ")
     print(cam_mtx)
@@ -56,7 +56,7 @@ def main():
             #Debug print
             # print("Homogeneous transformation:\n", M_mat)
             # print("Inverse transfromation:\n", M_inv)
-            # print("Camera coordinates:", cam_coords)
+            print("Camera coordinates:", cam_coords)
         #Show image
         cv2.imshow("detected", detected)
         k = cv2.waitKey(1)

@@ -20,8 +20,8 @@ criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 # generalizable checkerboard dimensions
 # https://stackoverflow.com/questions/31249037/calibrating-webcam-using-python-and-opencv-error?rq=1
-cbrow = 6
-cbcol = 7
+cbrow = 7
+cbcol = 6
 
 # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
 # IMPORTANT : Object points must be changed to get real physical distance.
@@ -32,9 +32,11 @@ objp[:, :2] = np.mgrid[0:cbcol, 0:cbrow].T.reshape(-1, 2)
 objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
 
-images = glob.glob('calib_images/*.jpg')
+images = glob.glob('tello_calib_images/*.jpg')
+print(images)
 
 for fname in images:
+    print(fname)
     img = cv2.imread(fname)
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -57,7 +59,7 @@ cv2.destroyAllWindows()
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
 
 # ---------- Saving the calibration -----------------
-cv_file = cv2.FileStorage("calib_params.yaml", cv2.FILE_STORAGE_WRITE)
+cv_file = cv2.FileStorage("tello_params.yaml", cv2.FILE_STORAGE_WRITE)
 cv_file.write("camera_matrix", mtx)
 cv_file.write("dist_coeff", dist)
 
