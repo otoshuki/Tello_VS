@@ -4,6 +4,7 @@
 '''
 Script to debug detection and motion planning for Project 1
 '''
+#Import stuff
 import cv2
 import cv2.aruco as aruco
 import numpy as np
@@ -27,7 +28,7 @@ def main():
         #Detect marker
         _, frame = cap.read()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        corners, ids, rejected = aruco.detectMarkers(gray, aruco_dict,
+        corners, ids, _ = aruco.detectMarkers(gray, aruco_dict,
                                                     parameters = params)
         detected = aruco.drawDetectedMarkers(frame, corners)
         #Get the rotation and translation vectors
@@ -38,9 +39,18 @@ def main():
             rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, 9, cam_mtx, dist_coeff)
             #Also draw axes
             for i in range(len(ids)):
-                aruco.drawAxis(detected, cam_mtx, dist_coeff, rvecs[i], tvecs[i], 2)
-            #Debug, print rvecs/tvecs
-            print(tvecs)
+                aruco.drawAxis(detected, cam_mtx, dist_coeff, rvecs[i], tvecs[i], 4.5)
+            #Get the rotation matrix using Rodrigues formula
+            r_mat, _ = cv2.Rodrigues(rvecs[0][0])
+            #The only translation vector to use
+            t_vec = tvecs[0][0]
+            #Get transformation matrix
+            M_mat = np.zeros((4,4))
+            M_mat[:3, :3] = r_mat
+            M_mat[:3, 3] = t_vec
+            M_mat[3,3] = 1
+            #Debug print
+            print("Homogeneous transformation:\n", M_mat)
         #Show image
         cv2.imshow("detected", detected)
         k = cv2.waitKey(1)
