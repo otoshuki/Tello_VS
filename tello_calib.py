@@ -20,8 +20,8 @@ criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 # generalizable checkerboard dimensions
 # https://stackoverflow.com/questions/31249037/calibrating-webcam-using-python-and-opencv-error?rq=1
-cbrow = 7
-cbcol = 6
+cbrow = 6
+cbcol = 7
 
 # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
 # IMPORTANT : Object points must be changed to get real physical distance.
@@ -54,6 +54,7 @@ for fname in images:
         img = cv2.drawChessboardCorners(img, (cbcol, cbrow), corners2,ret)
         cv2.imshow('img',img)
         cv2.waitKey(WAIT_TIME)
+        # print("done+"+fname)
 
 cv2.destroyAllWindows()
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)

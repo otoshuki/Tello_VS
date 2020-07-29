@@ -9,6 +9,24 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 
+def draw_paths(img, cam_mtx, dist, R, t, curr_pos):
+    # curr_pos = [20,20,5]
+    curr_pos[2]
+    #First get the curve from curr_pos to goal (0,0)
+    #For now, consider a straight path from curr_pos to final
+    the_path = np.linspace(curr_pos, [0,0,5], num = 20)
+    #Convert from world to camera coords
+    #Create the projection matrix
+    imgpts, _ = cv2.projectPoints(the_path, R, t, cam_mtx, dist)
+    # print(imgpts[9].ravel())
+    for i in range(len(the_path)):
+        point_3d = the_path[i]
+        img_point = imgpts[i].ravel().astype(np.int32)
+        #Draw circle with size depending on dist from cam
+        # cir_size = np.linalg.norm(curr_pos - point_3d)
+        img = cv2.circle(img, tuple(img_point), 5, (255,0,0), 2)
+    return img
+
 def main():
     #Start camera
     cap = cv2.VideoCapture(1)
@@ -24,6 +42,9 @@ def main():
     dist_coeff = cv_file.getNode("dist_coeff").mat()[0]
     print("Distortion Coefficients: ")
     print(dist_coeff)
+    cv_file.release()
+    #Drone position (optional)
+
     while 1:
         #Detect marker
         _, frame = cap.read()
@@ -56,9 +77,21 @@ def main():
             #Debug print
             # print("Homogeneous transformation:\n", M_mat)
             # print("Inverse transfromation:\n", M_inv)
-            print("Camera coordinates:", cam_coords)
+            # print("Camera coordinates:", cam_coords)
+            #Draw paths
+            try:
+                cv_file = cv2.FileStorage("drone_loc.yaml", cv2.FILE_STORAGE_READ)
+                pos = cv_file.getNode("curr_loc").mat()
+                pre_pos = pos
+            except:
+                pos = pre_pos
+                print("error case")
+                pre_pos = pos
+            print("Drone coordinates: ", pos.ravel())
+            detected = draw_paths(detected, cam_mtx, dist_coeff, rvecs[0][0], t_vec, pos.ravel())
         #Show image
         cv2.imshow("detected", detected)
+        cv_file.release()
         k = cv2.waitKey(1)
         if k == 27:
             break

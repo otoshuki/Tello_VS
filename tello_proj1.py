@@ -39,7 +39,7 @@ class Tello_controller:
         self.drone.send_command("streamon")
         time.sleep(1)
         self.cap = cv2.VideoCapture("udp://192.168.10.1:11111")
-        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)
+        # self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)
         print("LOG: Stream service on")
         #Set up battery and emergency land threads
         self.battery_thread = Thread(target=self._battery_thread)
@@ -51,9 +51,12 @@ class Tello_controller:
         self.params = aruco.DetectorParameters_create()
         print("LOG: ArUco set up")
         #Set up camera matrix and distortion coeffs
-        cv_file = cv2.FileStorage("tello_params.yaml", cv2.FILE_STORAGE_READ)
-        self.cam_mtx = cv_file.getNode("camera_matrix").mat()
-        self.dist_coeff = cv_file.getNode("dist_coeff").mat()[0]
+        self.cv_file = cv2.FileStorage("tello_params.yaml", cv2.FILE_STORAGE_READ)
+        self.cam_mtx = self.cv_file.getNode("camera_matrix").mat()
+        self.dist_coeff = self.cv_file.getNode("dist_coeff").mat()[0]
+        self.cv_file.release()
+        #Publish own location
+
 
     def run(self):
         '''
@@ -67,7 +70,7 @@ class Tello_controller:
             return 0
         #First frame takes time to load up
         #Take off
-        # self.drone.takeoff()
+        self.drone.takeoff()
         time.sleep(1)
         self.take_off_activated = True
         print("LOG: Successful takeoff")
@@ -107,7 +110,9 @@ class Tello_controller:
                 self.M_inv = np.linalg.inv(self.M_mat)
                 #Get camera location wrt marker
                 self.cam_coords = self.M_inv[:3, 3]
-                print("Camera coordinates:", self.cam_coords)
+                # print("Camera coordinates:", self.cam_coords)
+                self.cv_file = cv2.FileStorage("drone_loc.yaml", cv2.FILE_STORAGE_WRITE)
+                self.cv_file.write("curr_loc", self.cam_coords)
             #Show detection
             cv2.imshow("Tello Detected", self.detected)
             #Take pictures with s
@@ -120,6 +125,9 @@ class Tello_controller:
                 self.emergency_land()
                 break
         #End statement
+        self.cv_file = cv2.FileStorage("drone_loc.yaml", cv2.FILE_STORAGE_WRITE)
+        self.cv_file.write("curr_loc", np.array([0,0,0]))
+        self.cv_file.release()
         print("EXIT: Exited successfully")
 
     def _battery_thread(self):
@@ -149,7 +157,7 @@ class Tello_controller:
         self.drone.set_speed(10)
         #Land
         print("EMERGENCY: Landing Drone!")
-        # self.drone.land()
+        self.drone.land()
         #Shutdown stream
         time.sleep(1)
         print("EMERGENCY: Shutting stream")
