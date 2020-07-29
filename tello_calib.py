@@ -36,7 +36,7 @@ images = glob.glob('tello_calib_images/*.jpg')
 print(images)
 
 for fname in images:
-    print(fname)
+    # print(fname)
     img = cv2.imread(fname)
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -54,7 +54,7 @@ for fname in images:
         img = cv2.drawChessboardCorners(img, (cbcol, cbrow), corners2,ret)
         cv2.imshow('img',img)
         cv2.waitKey(WAIT_TIME)
-        # print("done+"+fname)
+        print("done+"+fname)
 
 cv2.destroyAllWindows()
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)

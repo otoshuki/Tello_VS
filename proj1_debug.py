@@ -11,7 +11,7 @@ import numpy as np
 
 def draw_paths(img, cam_mtx, dist, R, t, curr_pos):
     # curr_pos = [20,20,5]
-    curr_pos[2]
+    # curr_pos[2]
     #First get the curve from curr_pos to goal (0,0)
     #For now, consider a straight path from curr_pos to final
     the_path = np.linspace(curr_pos, [0,0,5], num = 20)

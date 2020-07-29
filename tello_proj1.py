@@ -113,6 +113,7 @@ class Tello_controller:
                 # print("Camera coordinates:", self.cam_coords)
                 self.cv_file = cv2.FileStorage("drone_loc.yaml", cv2.FILE_STORAGE_WRITE)
                 self.cv_file.write("curr_loc", self.cam_coords)
+                self.cv_file.release()
             #Show detection
             cv2.imshow("Tello Detected", self.detected)
             #Take pictures with s
